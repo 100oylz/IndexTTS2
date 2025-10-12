@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+/data/*
+!/data/.gitkeep
+!/data/README.md
+
+/output/*
+!/output/.gitkeep
+!/output/README.md
