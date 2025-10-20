@@ -39,10 +39,16 @@ dependencies = [
 cpu = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+  "torchaudio>=2.7.0",
 ]
 cu126 = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+  "torchaudio>=2.7.0",
+]
+
+deepspeed = [
+  "deepspeed==0.17.1",
 ]
 
 [tool.uv]
@@ -59,6 +65,10 @@ torch = [
   { index = "pytorch-cu126", extra = "cu126" },
 ]
 torchvision = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu126", extra = "cu126" },
+]
+torchaudio = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu126", extra = "cu126" },
 ]
