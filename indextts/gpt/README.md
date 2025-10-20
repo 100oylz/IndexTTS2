@@ -48,3 +48,18 @@ $$
 ### Convoluation Module
 
 ![](./../../doc/pic/gpt2_conformerEncoder_ConvModule.png)
+
+ConvModule 中使用了因果卷积其通过在输入向量左填充0，确保在计算当前时间步的时候不会错误的使用了未来的结果。(self.lorder 控制是否为因果卷积)
+
+> Traditional Convulation:{x1,x2,x3},Conv Kernel_size:3
+>
+> y1=w1*x1+w2*x2+w3*x3(与x2和x3有关)
+>
+> Causual Convulation:{0,0,x1,x2,x3},kernel_size:3
+>
+> y1=w1*0+w2*0+w3*x1(与x2和x3无关)
+
+### Convoluation Layer
+
+![](./../../doc/pic/gpt2_conformerEncoder_EncoderLayer.png)
+
