@@ -18,3 +18,6 @@ def make_pad_mask(lengths: torch.Tensor, max_len: Optional[int] = None) -> torch
     seq_range_expand = seq_range.unsqueeze(0).expand(bs, max_len)
     mask = seq_range_expand >= lengths.unsqueeze(1)
     return mask.unsqueeze(1)
+
+
+    
