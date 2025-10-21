@@ -15,3 +15,6 @@ wheels/
 /output/*
 !/output/.gitkeep
 !/output/README.md
+
+.idea/*
+.vscode/*
