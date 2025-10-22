@@ -19,7 +19,8 @@ def load_audio(audiopath, sampling_rate):
         try:
             audio = torchaudio.functional.resample(audio, sr, sampling_rate)
         except Exception as e:
-            print(f"Warning: {audiopath}, wave shape: {audio.shape}, sample_rate: {sr}")
+            print(
+                f"Warning: {audiopath}, wave shape: {audio.shape}, sample_rate: {sr}")
             return None
     # clip audio invalid values
     audio.clip_(-1, 1)
@@ -62,7 +63,12 @@ def de_tokenized_by_CJK_char(line: str, do_lower_case=False) -> str:
       output = "see you!"
     """
     # replace english words in the line with placeholders
+<<<<<<< HEAD
+    english_word_pattern = re.compile(
+        r"([A-Z]+(?:[\s-][A-Z-]+)*)", re.IGNORECASE)
+=======
     english_word_pattern = re.compile(r"([A-Z]+(?:[\s-][A-Z-]+)*)", re.IGNORECASE)
+>>>>>>> 447564afd0db9bbd81956149551d2de08a961224
     english_sents = english_word_pattern.findall(line)
     for i, sent in enumerate(english_sents):
         line = line.replace(sent, f"<sent_{i}>")
@@ -75,7 +81,12 @@ def de_tokenized_by_CJK_char(line: str, do_lower_case=False) -> str:
         if m:
             # restore the english word
             placeholder_index = int(m.group(2))
+<<<<<<< HEAD
+            words[i] = words[i].replace(
+                m.group(1), english_sents[placeholder_index])
+=======
             words[i] = words[i].replace(m.group(1), english_sents[placeholder_index])
+>>>>>>> 447564afd0db9bbd81956149551d2de08a961224
             if do_lower_case:
                 words[i] = words[i].lower()
     return "".join(words)
@@ -100,7 +111,12 @@ def make_pad_mask(lengths: torch.Tensor, max_len: int = 0) -> torch.Tensor:
     """
     batch_size = lengths.size(0)
     max_len = max_len if max_len > 0 else lengths.max().item()
+<<<<<<< HEAD
+    seq_range = torch.arange(
+        0, max_len, dtype=torch.int64, device=lengths.device)
+=======
     seq_range = torch.arange(0, max_len, dtype=torch.int64, device=lengths.device)
+>>>>>>> 447564afd0db9bbd81956149551d2de08a961224
     seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
     seq_length_expand = lengths.unsqueeze(-1)
     mask = seq_range_expand >= seq_length_expand
@@ -118,4 +134,8 @@ def safe_log(x: torch.Tensor, clip_val: float = 1e-7) -> torch.Tensor:
     Returns:
         Tensor: Element-wise logarithm of the input tensor with clipping applied.
     """
+<<<<<<< HEAD
     return torch.log(torch.clip(x, min=clip_val))
+=======
+    return torch.log(torch.clip(x, min=clip_val))
+>>>>>>> 447564afd0db9bbd81956149551d2de08a961224
