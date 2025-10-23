@@ -460,6 +460,8 @@ class UnifiedVoice(nn.Module):
         Given mel tokens that are derived from a padded audio clip and the actual lengths of each batch element in
         that audio clip, reformats the tokens with STOP_MEL_TOKEN in place of the zero padding. This is required
         preformatting to create a working TTS model.
+        根据从一段填充后的音频片段中提取的 mel 令牌以及该音频片段中每个批次元素的实际长度，将这些令牌替换为“STOP_MEL_TOKEN”，以取代零填充。
+        这是创建可正常运行的语音合成模型所需的预格式化步骤。
         """
         for b in range(len(mel_lengths)):
             # Due to the convolutional nature of how these tokens are generated,
@@ -511,6 +513,8 @@ class UnifiedVoice(nn.Module):
         else:
             return first_logits
 
+
+    # speaker conditioner forward calculate前向计算
     def get_conditioning(self, speech_conditioning_input, cond_mel_lengths=None):
         if self.condition_type == "perceiver":
             if speech_conditioning_input.ndim == 4:
@@ -542,7 +546,7 @@ class UnifiedVoice(nn.Module):
             conds = conds.unsqueeze(1)
         return conds
 
-
+    # emotion condition的前向计算
     def get_emo_conditioning(self, speech_conditioning_input, cond_mel_lengths=None):
         speech_conditioning_input, mask = self.emo_conditioning_encoder(speech_conditioning_input.transpose(1, 2),
                                                                         cond_mel_lengths)  # (b, s, d), (b, 1, s)
@@ -565,25 +569,31 @@ class UnifiedVoice(nn.Module):
         If return_attentions is specified, only logits are returned.
         If return_latent is specified, loss & logits are not computed or returned. Only the predicted latents are returned.
         """
-
+        # 控制是否启用speaker conditioner的训练
         if do_spk_cond:
+            # 说话人属性的前向计算
             speech_conditioning_latent = self.get_conditioning(speech_conditioning_latent.transpose(1,2), cond_mel_lengths)
         else:
+            # TODO：等待审查
+            # 使用原先的说话人属性（类似冻结的操作）
             speech_conditioning_latent = speech_conditioning_latent
-
+        # emotion conditioner的前向计算
         if emo_vec is None:
             emo_vec_syn_ori = self.get_emo_conditioning(emo_speech_conditioning_latent.transpose(1,2), emo_cond_mel_lengths)
             emo_vec_syn = self.emovec_layer(emo_vec_syn_ori)
             emo_vec = self.emo_layer(emo_vec_syn)
-
+        # 如果不是空的，则为传入的emo_vec
+        # Etext
         text_inputs = self.set_text_padding(text_inputs, text_lengths)
         text_inputs = F.pad(text_inputs, (0, 1), value=self.stop_text_token)
-
+        # Esem
         mel_codes = self.set_mel_padding(mel_codes, mel_codes_lengths)
         mel_codes = F.pad(mel_codes, (0, 1), value=self.stop_mel_token)
-
+        # p
+        # TODO:没完全理解
         duration_emb = self.speed_emb(torch.zeros_like(use_speed))
         duration_emb_half = self.speed_emb(torch.ones_like(use_speed))
+        # 应该是[e+c+p]
         conds = torch.cat((speech_conditioning_latent + emo_vec.unsqueeze(1), duration_emb_half.unsqueeze(1), duration_emb.unsqueeze(1)), 1)
         text_inputs, text_targets = self.build_aligned_inputs_and_targets(text_inputs, self.start_text_token, self.stop_text_token)
         text_emb = self.text_embedding(text_inputs) + self.text_pos_embedding(text_inputs)
@@ -694,7 +704,9 @@ class UnifiedVoice(nn.Module):
         duration_emb =  self.speed_emb(torch.zeros_like(tmp).long())
         duration_emb_half = self.speed_emb(torch.ones_like(tmp).long())
         conds_latent = torch.cat((speech_conditioning_latent + emo_vec.unsqueeze(1), duration_emb_half.unsqueeze(1), duration_emb.unsqueeze(1)), 1)
+        # 生成Esem：inputs_embeds
         input_ids, inputs_embeds, attention_mask = self.prepare_gpt_inputs(conds_latent, text_inputs)
+
         self.inference_model.store_mel_emb(inputs_embeds)
         if input_tokens is None:
             inputs = input_ids
@@ -727,6 +739,7 @@ class UnifiedVoice(nn.Module):
                                             max_length=max_length, logits_processor=logits_processor,
                                             num_return_sequences=num_return_sequences,
                                             **hf_generate_kwargs)
+        # S2M隐藏层输入
         if isinstance(output, torch.Tensor):
             return output[:, trunc_index:], speech_conditioning_latent
         # GenerateOutput

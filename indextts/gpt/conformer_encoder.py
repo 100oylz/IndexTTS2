@@ -252,26 +252,26 @@ class BaseEncoder(nn.Module):
         self.normalize_before = normalize_before
         self.after_norm = torch.nn.LayerNorm(output_size, eps=1e-5)
 
-def output_size(self) -> int:
-    return self._output_size
+    def output_size(self) -> int:
+        return self._output_size
 
-def forward(
-    self,
-    xs: torch.Tensor,
-    xs_lens: torch.Tensor,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self,
+        xs: torch.Tensor,
+        xs_lens: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
 
-    T = xs.size(1)
-    masks = ~make_pad_mask(xs_lens, T).unsqueeze(1)  # (B, 1, T)
-    xs, pos_emb, masks = self.embed(xs, masks)
-    chunk_masks = masks
-    mask_pad = masks  # (B, 1, T/subsample_rate)
-    for layer in self.encoders:
-        xs, chunk_masks, _, _ = layer(xs, chunk_masks, pos_emb, mask_pad)
-    if self.normalize_before:
-        xs = self.after_norm(xs)
+        T = xs.size(1)
+        masks = ~make_pad_mask(xs_lens, T).unsqueeze(1)  # (B, 1, T)
+        xs, pos_emb, masks = self.embed(xs, masks)
+        chunk_masks = masks
+        mask_pad = masks  # (B, 1, T/subsample_rate)
+        for layer in self.encoders:
+            xs, chunk_masks, _, _ = layer(xs, chunk_masks, pos_emb, mask_pad)
+        if self.normalize_before:
+            xs = self.after_norm(xs)
 
-    return xs, masks
+        return xs, masks
 
 
 class ConformerEncoder(BaseEncoder):
