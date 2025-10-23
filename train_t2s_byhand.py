@@ -11,7 +11,7 @@ import numpy as np
 # 假设以下导入有效
 from indextts.gpt.conformer_encoder import ConformerEncoder
 from indextts.gpt.model_v2 import UnifiedVoice
-
+from indextts.utils.front import  TextNormalizer,TextTokenizer
 
 # ---------------------- 子配置类（保持不变） ----------------------
 @dataclass
@@ -73,6 +73,7 @@ class TrainHParams:
     val_batch_size: int = 64
     num_workers: int = 4
     pin_memory: bool = True
+    seed:int =42
     # device 用 default_factory 且冻结，确保自动检测后不可修改
     device: str = field(
         default_factory=lambda: "cuda:0" if torch.cuda.is_available() else "cpu",
@@ -85,7 +86,6 @@ class TrainHParams:
     weight_decay: float = 1e-5
     betas: tuple = (0.9, 0.999)
     eps: float = 1e-8
-
     # ---------------------- 学习率调度配置（直接移除，不保留无效参数） ----------------------
     # （已忽略学习率递减，故删除所有调度器相关字段）
 
@@ -95,6 +95,7 @@ class TrainHParams:
     amp: bool = field(default=False, init=False)  # 强制禁用混合精度，不可修改
 
     # ---------------------- 数据相关配置 ----------------------
+    vocab_file_path:str="./checkpoints/bpe.model"
     train_data_path: str = "./data/train"
     val_data_path: str = "./data/val"
     json_index_path: str = "./data/dataset_index.json"
@@ -129,7 +130,8 @@ class T2STrainer:
         # 1. 加载训练超参数（冻结，不可修改）和模型配置
         self.train_hparams = TrainHParams()  # 只能使用默认值，无法修改
         self.model_config = UnifiedVoiceConfig()
-
+        text_normalizer=TextNormalizer()
+        self.text_tokenizer=TextTokenizer(self.train_hparams.vocab_file_path,text_normalizer)
         # 2. 固定随机种子（保证训练可复现）
         self._set_seed(self.train_hparams.seed)
 
@@ -298,7 +300,10 @@ class T2STrainer:
                 return True
         return False
 
-    def train(self,stage):
+    def train(self,text,stage):
+        tokenized_text=self.text_tokenizer.batch_encode(text)
+        print(tokenized_text)
+
         if(stage==1):
             pass
         elif(stage==2):
@@ -322,5 +327,6 @@ if __name__ == '__main__':
 
     # 可选：加载预训练权重（微调场景）
     # trainer.load_pretrained("./pretrained/unified_voice_best.pth")
-
+    test_text=["Hello,World!"]
+    trainer.train(test_text,stage=1)
     print("\n训练器初始化完成，可开始训练流程")
