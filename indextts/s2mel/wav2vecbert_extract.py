@@ -11,10 +11,13 @@ import math
 import json
 import safetensors
 import json5
-from hf_utils import get_lowercase_keys_config, override_config
+from pathlib import Path
+from .hf_utils import get_lowercase_keys_config, override_config
 # from codec.kmeans.repcodec_model import RepCodec
 #from startts.examples.ftchar.models.codec.kmeans.repcodec_model import RepCodec
 from indextts.utils.maskgct.models.codec.kmeans.repcodec_model import RepCodec
+
+model_dir = Path("./MaskGCT_model/w2v_bert").resolve().as_posix()
 
 class JsonHParams:
     def __init__(self, **kwargs):
@@ -91,7 +94,7 @@ def load_config(config_fn, lowercase=False):
 class Extract_wav2vectbert:
     def __init__(self,device):
     #semantic_model = Wav2Vec2BertModel.from_pretrained("facebook/w2v-bert-2.0") 选择本地加载而不是在线
-        self.semantic_model = Wav2Vec2BertModel.from_pretrained("./MaskGCT_model/w2v_bert/")
+        self.semantic_model = Wav2Vec2BertModel.from_pretrained("./MaskGCT_model/w2v_bert", local_files_only=True, repo_type="model")
         self.semantic_model.eval()
         self.semantic_model.to(device)
         self.stat_mean_var = torch.load("./MaskGCT_model/wav2vec2bert_stats.pt")
@@ -100,7 +103,7 @@ class Extract_wav2vectbert:
         self.semantic_mean = self.semantic_mean.to(device)
         self.semantic_std = self.semantic_std.to(device)
         self.processor = SeamlessM4TFeatureExtractor.from_pretrained(
-                "./MaskGCT_model/w2v_bert/")
+                "./MaskGCT_model/w2v_bert", local_files_only=True, repo_type="model" )
         self.device = device
         
         cfg_maskgct = load_config('./MaskGCT_model/maskgct.json')
