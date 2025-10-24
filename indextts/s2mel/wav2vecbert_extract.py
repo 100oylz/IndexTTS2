@@ -17,7 +17,7 @@ from .hf_utils import get_lowercase_keys_config, override_config
 #from startts.examples.ftchar.models.codec.kmeans.repcodec_model import RepCodec
 from indextts.utils.maskgct.models.codec.kmeans.repcodec_model import RepCodec
 
-model_dir = Path("./MaskGCT_model/w2v_bert").resolve().as_posix()
+
 
 class JsonHParams:
     def __init__(self, **kwargs):
@@ -92,23 +92,33 @@ def load_config(config_fn, lowercase=False):
     return cfg
 
 class Extract_wav2vectbert:
-    def __init__(self,device):
-    #semantic_model = Wav2Vec2BertModel.from_pretrained("facebook/w2v-bert-2.0") 选择本地加载而不是在线
-        self.semantic_model = Wav2Vec2BertModel.from_pretrained("./MaskGCT_model/w2v_bert", local_files_only=True, repo_type="model")
+    def __init__(self, device):
+        current_dir = Path(__file__).resolve().parent  # 获取当前脚本所在目录
+        model_root = current_dir / "MaskGCT_model"
+        model_dir = (model_root / "w2v_bert").resolve().as_posix()
+
+        self.semantic_model = Wav2Vec2BertModel.from_pretrained(
+            model_dir,
+            local_files_only=True
+        )
         self.semantic_model.eval()
         self.semantic_model.to(device)
-        self.stat_mean_var = torch.load("./MaskGCT_model/wav2vec2bert_stats.pt")
-        self.semantic_mean = self.stat_mean_var["mean"]
-        self.semantic_std = torch.sqrt(self.stat_mean_var["var"])
-        self.semantic_mean = self.semantic_mean.to(device)
-        self.semantic_std = self.semantic_std.to(device)
+
+        stats_path = (current_dir / "MaskGCT_model" / "wav2vec2bert_stats.pt").resolve()
+        self.stat_mean_var = torch.load(stats_path)
+        self.semantic_mean = self.stat_mean_var["mean"].to(device)
+        self.semantic_std = torch.sqrt(self.stat_mean_var["var"]).to(device)
+
         self.processor = SeamlessM4TFeatureExtractor.from_pretrained(
-                "./MaskGCT_model/w2v_bert", local_files_only=True, repo_type="model" )
+            model_dir,
+            local_files_only=True
+        )
         self.device = device
-        
-        cfg_maskgct = load_config('./MaskGCT_model/maskgct.json')
+
+        cfg_maskgct = load_config(current_dir / "MaskGCT_model" / "maskgct.json")
+        self.semantic_code_ckpt = (current_dir / "MaskGCT_model" / "semantic_codec" / "model.safetensors").resolve()
+
         cfg = cfg_maskgct.model.semantic_codec
-        self.semantic_code_ckpt = r'./MaskGCT_model/semantic_codec/model.safetensors'
         self.semantic_codec = RepCodec(cfg=cfg)
         self.semantic_codec.eval()
         self.semantic_codec.to(device)

@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 from omegaconf import OmegaConf
 from indextts.s2mel.s2m_model import S2MModel
 
+
 # ===== 1️⃣ 模拟数据集 =====
 class DummyS2MDataset(Dataset):
     def __init__(self, num_samples=16, seq_len=150):
